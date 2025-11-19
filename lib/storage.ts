@@ -17,13 +17,11 @@ let memoryStore: AppData = {
   users: [DEFAULT_ADMIN],
 };
 
-// Track if data has been initialized in this instance
-let isInitialized = false;
+// Track if we're in a read-only environment (like Vercel production)
+let isReadOnly = false;
 
-// Initialize data
-async function initData(): Promise<AppData> {
+async function loadFromFile(): Promise<AppData | null> {
   try {
-    // Try to read from file (development)
     const fileData = await fs.readFile(DATA_FILE, 'utf-8');
     const data = JSON.parse(fileData);
 
@@ -33,11 +31,39 @@ async function initData(): Promise<AppData> {
       data.users.push(DEFAULT_ADMIN);
     }
 
-    memoryStore = data;
-    isInitialized = true;
     return data;
   } catch (error) {
-    // File doesn't exist or can't be read, use default
+    return null;
+  }
+}
+
+async function saveData(data: AppData): Promise<void> {
+  memoryStore = data;
+
+  if (isReadOnly) {
+    // Skip file write in read-only environments
+    return;
+  }
+
+  try {
+    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (error) {
+    // Mark as read-only for future operations
+    isReadOnly = true;
+  }
+}
+
+export async function getData(): Promise<AppData> {
+  // Always try to read from file first (for development/local persistence)
+  const fileData = await loadFromFile();
+
+  if (fileData) {
+    memoryStore = fileData;
+    return fileData;
+  }
+
+  // File doesn't exist, use memory store or create default
+  if (memoryStore.users.length === 0) {
     memoryStore = {
       buttons: [],
       users: [DEFAULT_ADMIN],
@@ -47,29 +73,10 @@ async function initData(): Promise<AppData> {
     try {
       await saveData(memoryStore);
     } catch (e) {
-      // Ignore save errors (might be on Vercel where FS is read-only)
+      // Ignore save errors
     }
-
-    isInitialized = true;
-    return memoryStore;
   }
-}
 
-async function saveData(data: AppData): Promise<void> {
-  try {
-    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
-    memoryStore = data;
-  } catch (error) {
-    // On Vercel, file system is read-only, so just update memory
-    memoryStore = data;
-  }
-}
-
-export async function getData(): Promise<AppData> {
-  // Always try to initialize on first call in this instance
-  if (!isInitialized) {
-    await initData();
-  }
   return memoryStore;
 }
 
