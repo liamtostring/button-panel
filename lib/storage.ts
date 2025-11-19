@@ -11,16 +11,12 @@ const DEFAULT_ADMIN: User = {
   isAdmin: true,
 };
 
-// In-memory cache (per module instance)
-let memoryCache: AppData | null = null;
-let cacheTimestamp: number = 0;
-const CACHE_TTL = 100; // 100ms cache to avoid reading file too frequently within same request
-
 // Track if we're in a read-only environment
 let isReadOnly = false;
 
 async function loadFromFile(): Promise<AppData> {
   try {
+    console.log('[Storage] Reading from file:', DATA_FILE);
     const fileData = await fs.readFile(DATA_FILE, 'utf-8');
     const data = JSON.parse(fileData);
 
@@ -30,8 +26,10 @@ async function loadFromFile(): Promise<AppData> {
       data.users.push(DEFAULT_ADMIN);
     }
 
+    console.log('[Storage] Loaded data:', { buttons: data.buttons.length, users: data.users.length });
     return data;
   } catch (error) {
+    console.log('[Storage] File not found, using defaults');
     // File doesn't exist, return default data
     return {
       buttons: [],
@@ -41,52 +39,38 @@ async function loadFromFile(): Promise<AppData> {
 }
 
 async function saveData(data: AppData): Promise<void> {
+  console.log('[Storage] Saving data:', { buttons: data.buttons.length, users: data.users.length });
+
   // Skip file write if in read-only mode
   if (isReadOnly) {
-    console.warn('Skipping file write in read-only mode');
+    console.warn('[Storage] Skipping file write in read-only mode');
     return;
   }
 
   // Try to persist to file
   try {
-    // Write to temp file first, then rename (atomic operation)
-    const tempFile = DATA_FILE + '.tmp';
-    await fs.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf-8');
-    await fs.rename(tempFile, DATA_FILE);
-
-    // Update cache
-    memoryCache = data;
-    cacheTimestamp = Date.now();
-
-    console.log('Data saved successfully:', { buttons: data.buttons.length, users: data.users.length });
+    // Direct write (simpler, more reliable for development)
+    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    console.log('[Storage] ✓ Data saved successfully to', DATA_FILE);
   } catch (error) {
-    console.error('File write failed:', error);
+    console.error('[Storage] ✗ File write failed:', error);
     isReadOnly = true;
+    throw error; // Propagate error so caller knows save failed
   }
 }
 
 export async function getData(): Promise<AppData> {
-  // Check if cache is still valid
-  const now = Date.now();
-  if (memoryCache && (now - cacheTimestamp) < CACHE_TTL) {
-    return memoryCache;
-  }
-
-  // Load from file
+  // Always read from file - no caching
+  // This ensures we always get the latest data
   const data = await loadFromFile();
-
-  // Update cache
-  memoryCache = data;
-  cacheTimestamp = now;
 
   // If file doesn't exist yet, create it
   try {
-    const fileExists = await fs.access(DATA_FILE).then(() => true).catch(() => false);
-    if (!fileExists) {
-      await saveData(data);
-    }
+    await fs.access(DATA_FILE);
   } catch (e) {
-    // Ignore errors
+    // File doesn't exist, create it
+    console.log('[Storage] Creating initial data file');
+    await saveData(data);
   }
 
   return data;
