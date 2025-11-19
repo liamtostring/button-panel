@@ -4,12 +4,21 @@ import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
-// Default admin user
-const DEFAULT_ADMIN: User = {
-  username: 'admin',
-  password: 'admin123',
-  isAdmin: true,
-};
+// Hardcoded users - change USER_PASSWORD to set the regular user's password
+const USER_PASSWORD = 'user123'; // Change this to set the regular user's password
+
+const HARDCODED_USERS: User[] = [
+  {
+    username: 'admin',
+    password: 'admin123',
+    isAdmin: true,
+  },
+  {
+    username: 'user',
+    password: USER_PASSWORD,
+    isAdmin: false,
+  }
+];
 
 // Track if we're in a read-only environment
 let isReadOnly = false;
@@ -20,11 +29,8 @@ async function loadFromFile(): Promise<AppData> {
     const fileData = await fs.readFile(DATA_FILE, 'utf-8');
     const data = JSON.parse(fileData);
 
-    // Ensure admin user exists
-    const adminExists = data.users.some((u: User) => u.username === 'admin');
-    if (!adminExists) {
-      data.users.push(DEFAULT_ADMIN);
-    }
+    // Always use hardcoded users, ignore users from file
+    data.users = HARDCODED_USERS;
 
     console.log('[Storage] Loaded data:', { buttons: data.buttons.length, users: data.users.length });
     return data;
@@ -33,7 +39,7 @@ async function loadFromFile(): Promise<AppData> {
     // File doesn't exist, return default data
     return {
       buttons: [],
-      users: [DEFAULT_ADMIN],
+      users: HARDCODED_USERS,
     };
   }
 }
@@ -47,10 +53,11 @@ async function saveData(data: AppData): Promise<void> {
     return;
   }
 
-  // Try to persist to file
+  // Try to persist to file - only save buttons, not users (users are hardcoded)
   try {
-    // Direct write (simpler, more reliable for development)
-    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    // Only persist buttons to file
+    const fileData = { buttons: data.buttons, users: [] };
+    await fs.writeFile(DATA_FILE, JSON.stringify(fileData, null, 2), 'utf-8');
     console.log('[Storage] ✓ Data saved successfully to', DATA_FILE);
   } catch (error) {
     console.error('[Storage] ✗ File write failed:', error);
@@ -131,33 +138,11 @@ export async function getUser(username: string): Promise<User | undefined> {
 }
 
 export async function createUser(user: User): Promise<User> {
-  const data = await getData();
-
-  // Check if user already exists
-  const exists = data.users.some(u => u.username === user.username);
-  if (exists) {
-    throw new Error('User already exists');
-  }
-
-  data.users.push(user);
-  await saveData(data);
-  return user;
+  // Users are hardcoded - cannot create new users
+  throw new Error('User management is disabled. Users are hardcoded.');
 }
 
 export async function deleteUser(username: string): Promise<boolean> {
-  const data = await getData();
-
-  // Prevent deleting admin
-  if (username === 'admin') {
-    return false;
-  }
-
-  const initialLength = data.users.length;
-  data.users = data.users.filter(u => u.username !== username);
-
-  if (data.users.length < initialLength) {
-    await saveData(data);
-    return true;
-  }
+  // Users are hardcoded - cannot delete users
   return false;
 }
