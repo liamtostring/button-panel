@@ -36,13 +36,13 @@ export default function PanelPage() {
     try {
       const response = await fetch('/api/buttons');
       if (!response.ok) {
-        throw new Error('Failed to load buttons');
+        throw new Error('Error al cargar botones');
       }
 
       const data = await response.json();
       setButtons(data);
     } catch (err) {
-      setError('Failed to load buttons');
+      setError('Error al cargar botones');
     } finally {
       setLoading(false);
     }
@@ -64,10 +64,10 @@ export default function PanelPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to trigger webhook');
+        setError(data.error || 'Error al ejecutar webhook');
       }
     } catch (err) {
-      setError('Failed to trigger webhook');
+      setError('Error al ejecutar webhook');
     } finally {
       setTriggeringId(null);
     }
@@ -87,7 +87,7 @@ export default function PanelPage() {
         justifyContent: 'center',
         background: '#f5f5f5',
       }}>
-        <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
+        <div style={{ fontSize: '18px', color: '#666' }}>Cargando...</div>
       </div>
     );
   }
@@ -119,13 +119,13 @@ export default function PanelPage() {
               color: '#333',
               margin: 0,
             }}>
-              Button Panel
+              Panel de Botones
             </h1>
             <p style={{
               color: '#666',
               margin: '5px 0 0 0',
             }}>
-              Welcome, {username}
+              Bienvenido, {username}
             </p>
           </div>
           <button
@@ -140,7 +140,7 @@ export default function PanelPage() {
               fontWeight: '500',
             }}
           >
-            Logout
+            Cerrar Sesión
           </button>
         </div>
 
@@ -165,7 +165,7 @@ export default function PanelPage() {
             textAlign: 'center',
             color: '#666',
           }}>
-            No buttons configured yet. Contact your administrator.
+            No hay botones configurados aún. Contacta a tu administrador.
           </div>
         ) : (
           <div style={{
@@ -202,7 +202,7 @@ export default function PanelPage() {
                   e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
                 }}
               >
-                {triggeringId === button.id ? 'Triggering...' : button.label}
+                {triggeringId === button.id ? 'Ejecutando...' : button.label}
               </button>
             ))}
           </div>

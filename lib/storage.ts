@@ -17,6 +17,9 @@ let memoryStore: AppData = {
   users: [DEFAULT_ADMIN],
 };
 
+// Track if data has been initialized in this instance
+let isInitialized = false;
+
 // Initialize data
 async function initData(): Promise<AppData> {
   try {
@@ -31,6 +34,7 @@ async function initData(): Promise<AppData> {
     }
 
     memoryStore = data;
+    isInitialized = true;
     return data;
   } catch (error) {
     // File doesn't exist or can't be read, use default
@@ -46,6 +50,7 @@ async function initData(): Promise<AppData> {
       // Ignore save errors (might be on Vercel where FS is read-only)
     }
 
+    isInitialized = true;
     return memoryStore;
   }
 }
@@ -61,8 +66,8 @@ async function saveData(data: AppData): Promise<void> {
 }
 
 export async function getData(): Promise<AppData> {
-  // Always return current memory store, but try to init if empty
-  if (memoryStore.users.length === 0) {
+  // Always try to initialize on first call in this instance
+  if (!isInitialized) {
     await initData();
   }
   return memoryStore;

@@ -27,7 +27,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Error de inicio de sesión');
         return;
       }
 
@@ -38,7 +38,7 @@ export default function LoginPage() {
         router.push('/panel');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Ocurrió un error. Por favor intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -68,14 +68,14 @@ export default function LoginPage() {
           textAlign: 'center',
           color: '#333',
         }}>
-          Button Panel
+          Panel de Botones
         </h1>
         <p style={{
           textAlign: 'center',
           color: '#666',
           marginBottom: '30px',
         }}>
-          Sign in to continue
+          Inicia sesión para continuar
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -86,7 +86,7 @@ export default function LoginPage() {
               color: '#333',
               fontWeight: '500',
             }}>
-              Username
+              Usuario
             </label>
             <input
               type="text"
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 fontSize: '16px',
                 boxSizing: 'border-box',
               }}
-              placeholder="Enter username"
+              placeholder="Ingresa tu usuario"
             />
           </div>
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
               color: '#333',
               fontWeight: '500',
             }}>
-              Password
+              Contraseña
             </label>
             <input
               type="password"
@@ -127,7 +127,7 @@ export default function LoginPage() {
                 fontSize: '16px',
                 boxSizing: 'border-box',
               }}
-              placeholder="Enter password"
+              placeholder="Ingresa tu contraseña"
             />
           </div>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
               transition: 'background 0.3s',
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
       </div>
