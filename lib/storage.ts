@@ -11,17 +11,15 @@ const DEFAULT_ADMIN: User = {
   isAdmin: true,
 };
 
-// In-memory store (source of truth during runtime)
-let memoryStore: AppData = {
-  buttons: [],
-  users: [DEFAULT_ADMIN],
-};
+// In-memory cache (per module instance)
+let memoryCache: AppData | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 100; // 100ms cache to avoid reading file too frequently within same request
 
-// Track initialization state
-let isInitialized = false;
+// Track if we're in a read-only environment
 let isReadOnly = false;
 
-async function loadFromFile(): Promise<AppData | null> {
+async function loadFromFile(): Promise<AppData> {
   try {
     const fileData = await fs.readFile(DATA_FILE, 'utf-8');
     const data = JSON.parse(fileData);
@@ -34,50 +32,64 @@ async function loadFromFile(): Promise<AppData | null> {
 
     return data;
   } catch (error) {
-    return null;
+    // File doesn't exist, return default data
+    return {
+      buttons: [],
+      users: [DEFAULT_ADMIN],
+    };
   }
 }
 
 async function saveData(data: AppData): Promise<void> {
-  // Data is already modified in memoryStore (since getData returns reference)
-  // Just need to persist to file
-
   // Skip file write if in read-only mode
   if (isReadOnly) {
+    console.warn('Skipping file write in read-only mode');
     return;
   }
 
   // Try to persist to file
   try {
-    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+    // Write to temp file first, then rename (atomic operation)
+    const tempFile = DATA_FILE + '.tmp';
+    await fs.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    await fs.rename(tempFile, DATA_FILE);
+
+    // Update cache
+    memoryCache = data;
+    cacheTimestamp = Date.now();
+
+    console.log('Data saved successfully:', { buttons: data.buttons.length, users: data.users.length });
   } catch (error) {
-    console.warn('File write failed, running in memory-only mode');
+    console.error('File write failed:', error);
     isReadOnly = true;
   }
 }
 
 export async function getData(): Promise<AppData> {
-  // Initialize from file only once on first call
-  if (!isInitialized) {
-    const fileData = await loadFromFile();
-
-    if (fileData) {
-      // File exists, load it into memory
-      memoryStore = fileData;
-    } else {
-      // No file, try to create it with default data
-      try {
-        await saveData(memoryStore);
-      } catch (e) {
-        // Ignore errors
-      }
-    }
-
-    isInitialized = true;
+  // Check if cache is still valid
+  const now = Date.now();
+  if (memoryCache && (now - cacheTimestamp) < CACHE_TTL) {
+    return memoryCache;
   }
 
-  // Always return the in-memory store (source of truth)
-  return memoryStore;
+  // Load from file
+  const data = await loadFromFile();
+
+  // Update cache
+  memoryCache = data;
+  cacheTimestamp = now;
+
+  // If file doesn't exist yet, create it
+  try {
+    const fileExists = await fs.access(DATA_FILE).then(() => true).catch(() => false);
+    if (!fileExists) {
+      await saveData(data);
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+
+  return data;
 }
 
 export async function getButtons(): Promise<Button[]> {
