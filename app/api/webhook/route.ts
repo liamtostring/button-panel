@@ -38,17 +38,30 @@ export async function POST(request: NextRequest) {
         }),
       });
 
+      // Try to parse JSON response from webhook
+      let webhookData: any = null;
+      try {
+        const contentType = webhookResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          webhookData = await webhookResponse.json();
+        }
+      } catch (e) {
+        // If parsing fails, continue without webhook data
+      }
+
       return NextResponse.json({
         success: true,
         status: webhookResponse.status,
         statusText: webhookResponse.statusText,
+        message: webhookData?.message || null,
+        data: webhookData,
       });
     } catch (webhookError: any) {
       console.error('Webhook error:', webhookError);
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to trigger webhook: ' + webhookError.message,
+          error: 'Error al ejecutar webhook: ' + webhookError.message,
         },
         { status: 500 }
       );

@@ -8,6 +8,7 @@ export default function PanelPage() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [triggeringId, setTriggeringId] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function PanelPage() {
   const handleButtonClick = async (buttonId: string) => {
     setTriggeringId(buttonId);
     setError('');
+    setSuccessMessage('');
 
     try {
       const response = await fetch('/api/webhook', {
@@ -65,6 +67,13 @@ export default function PanelPage() {
 
       if (!response.ok) {
         setError(data.error || 'Error al ejecutar webhook');
+      } else {
+        // Show success message from webhook
+        if (data.message) {
+          setSuccessMessage(data.message);
+          // Auto-clear success message after 5 seconds
+          setTimeout(() => setSuccessMessage(''), 5000);
+        }
       }
     } catch (err) {
       setError('Error al ejecutar webhook');
@@ -154,6 +163,22 @@ export default function PanelPage() {
             marginBottom: '20px',
           }}>
             {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div style={{
+            padding: '15px',
+            background: '#d1fae5',
+            border: '1px solid #6ee7b7',
+            borderRadius: '5px',
+            color: '#065f46',
+            marginBottom: '20px',
+            textAlign: 'center',
+            fontSize: '16px',
+            fontWeight: '600',
+          }}>
+            {successMessage}
           </div>
         )}
 
