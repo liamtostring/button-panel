@@ -11,13 +11,14 @@ const DEFAULT_ADMIN: User = {
   isAdmin: true,
 };
 
-// In-memory store (fallback for serverless)
+// In-memory store (source of truth during runtime)
 let memoryStore: AppData = {
   buttons: [],
   users: [DEFAULT_ADMIN],
 };
 
-// Track if we're in a read-only environment (like Vercel production)
+// Track initialization state
+let isInitialized = false;
 let isReadOnly = false;
 
 async function loadFromFile(): Promise<AppData | null> {
@@ -38,45 +39,44 @@ async function loadFromFile(): Promise<AppData | null> {
 }
 
 async function saveData(data: AppData): Promise<void> {
-  memoryStore = data;
+  // Data is already modified in memoryStore (since getData returns reference)
+  // Just need to persist to file
 
+  // Skip file write if in read-only mode
   if (isReadOnly) {
-    // Skip file write in read-only environments
     return;
   }
 
+  // Try to persist to file
   try {
     await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
   } catch (error) {
-    // Mark as read-only for future operations
+    console.warn('File write failed, running in memory-only mode');
     isReadOnly = true;
   }
 }
 
 export async function getData(): Promise<AppData> {
-  // Always try to read from file first (for development/local persistence)
-  const fileData = await loadFromFile();
+  // Initialize from file only once on first call
+  if (!isInitialized) {
+    const fileData = await loadFromFile();
 
-  if (fileData) {
-    memoryStore = fileData;
-    return fileData;
-  }
-
-  // File doesn't exist, use memory store or create default
-  if (memoryStore.users.length === 0) {
-    memoryStore = {
-      buttons: [],
-      users: [DEFAULT_ADMIN],
-    };
-
-    // Try to save initial data
-    try {
-      await saveData(memoryStore);
-    } catch (e) {
-      // Ignore save errors
+    if (fileData) {
+      // File exists, load it into memory
+      memoryStore = fileData;
+    } else {
+      // No file, try to create it with default data
+      try {
+        await saveData(memoryStore);
+      } catch (e) {
+        // Ignore errors
+      }
     }
+
+    isInitialized = true;
   }
 
+  // Always return the in-memory store (source of truth)
   return memoryStore;
 }
 
