@@ -95,7 +95,7 @@ export default function PanelPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
       padding: '20px',
     }}>
       <div style={{

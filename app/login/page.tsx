@@ -50,7 +50,7 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
       padding: '20px',
     }}>
       <div style={{
@@ -151,7 +151,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px',
-              background: loading ? '#999' : '#667eea',
+              background: loading ? '#999' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
@@ -164,19 +164,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div style={{
-          marginTop: '20px',
-          padding: '15px',
-          background: '#f5f5f5',
-          borderRadius: '5px',
-          fontSize: '14px',
-          color: '#666',
-        }}>
-          <strong>Default Admin:</strong><br />
-          Username: admin<br />
-          Password: admin123
-        </div>
       </div>
     </div>
   );

@@ -254,7 +254,7 @@ export default function AdminPage() {
             onClick={() => setActiveTab('buttons')}
             style={{
               padding: '12px 24px',
-              background: activeTab === 'buttons' ? '#667eea' : 'white',
+              background: activeTab === 'buttons' ? '#3b82f6' : 'white',
               color: activeTab === 'buttons' ? 'white' : '#333',
               border: 'none',
               borderRadius: '5px',
@@ -269,7 +269,7 @@ export default function AdminPage() {
             onClick={() => setActiveTab('users')}
             style={{
               padding: '12px 24px',
-              background: activeTab === 'users' ? '#667eea' : 'white',
+              background: activeTab === 'users' ? '#3b82f6' : 'white',
               color: activeTab === 'users' ? 'white' : '#333',
               border: 'none',
               borderRadius: '5px',
@@ -422,7 +422,7 @@ export default function AdminPage() {
                     type="submit"
                     style={{
                       padding: '12px 24px',
-                      background: '#667eea',
+                      background: '#3b82f6',
                       color: 'white',
                       border: 'none',
                       borderRadius: '5px',
@@ -620,7 +620,7 @@ export default function AdminPage() {
                   type="submit"
                   style={{
                     padding: '12px 24px',
-                    background: '#667eea',
+                    background: '#3b82f6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '5px',
@@ -668,7 +668,7 @@ export default function AdminPage() {
                         <span style={{
                           marginLeft: '10px',
                           padding: '4px 8px',
-                          background: '#667eea',
+                          background: '#3b82f6',
                           color: 'white',
                           borderRadius: '4px',
                           fontSize: '12px',
